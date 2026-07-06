@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detection System — Model Training Code & Results</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            color: #1a1a2e;
+            line-height: 1.6;
+            padding: 40px;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                color: #111;
+                padding: 20px;
+                font-size: 9pt;
+            }
+            .section { page-break-inside: avoid; }
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ─────────────────────────── */
+        .header {
+            background: linear-gradient(135deg, #1a3a5c 0%, #2c5282 50%, #2b6cb0 100%);
+            border-radius: 16px;
+            padding: 40px 48px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            font-size: 15px;
+            color: #bee3f8;
+            font-weight: 400;
+        }
+
+        .header .meta {
+            margin-top: 16px;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .header .meta-item {
+            font-size: 13px;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        /* ── Sections ───────────────────────── */
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2b6cb0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title .badge {
+            font-size: 11px;
+            background: #ebf8ff;
+            color: #2b6cb0;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: 1px solid #bee3f8;
+        }
+
+        .section-desc {
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 12px;
+        }
+
+        /* ── Code Blocks ────────────────────── */
+        .code-block {
+            background: #f7fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .code-header {
+            background: #edf2f7;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .code-header .lang {
+            color: #2b6cb0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .code-content {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .code-content pre {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+            white-space: pre;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        /* ── Syntax Highlighting (light theme) ── */
+        .kw { color: #8b5cf6; }         /* keywords - purple */
+        .fn { color: #2563eb; }         /* functions - blue */
+        .st { color: #16a34a; }         /* strings - green */
+        .cm { color: #9ca3af; font-style: italic; }  /* comments - grey */
+        .im { color: #d97706; }         /* imports - amber */
+        .nb { color: #0891b2; }         /* builtins/numbers - cyan */
+        .op { color: #374151; }         /* operators - dark grey */
+        .dc { color: #dc2626; }         /* decorators/special - red */
+
+        /* ── Terminal Output ────────────────── */
+        .terminal-block {
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .terminal-header {
+            background: #334155;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #475569;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f57; }
+        .terminal-dot.yellow { background: #febc2e; }
+        .terminal-dot.green { background: #28c840; }
+
+        .terminal-title {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-left: 8px;
+        }
+
+        .terminal-content {
+            padding: 20px;
+        }
+
+        .terminal-content pre {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+            white-space: pre;
+            color: #e2e8f0;
+            margin: 0;
+        }
+
+        .terminal-content .prompt { color: #4ade80; }
+        .terminal-content .info { color: #60a5fa; }
+        .terminal-content .success { color: #4ade80; }
+        .terminal-content .heading { color: #f8fafc; font-weight: bold; }
+        .terminal-content .divider { color: #64748b; }
+
+        /* ── Results Table ──────────────────── */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 12px;
+            overflow: hidden;
+            font-size: 14px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+        }
+
+        .results-table th {
+            background: #2b6cb0;
+            color: #ffffff;
+            padding: 14px 20px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-table td {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .results-table tr:nth-child(even) { background: #f7fafc; }
+
+        .results-table .highlight {
+            background: #ebf8ff !important;
+            font-weight: 600;
+        }
+
+        .results-table .model-name { color: #1a202c; font-weight: 600; }
+        .results-table .metric { color: #4a5568; }
+        .results-table .best { color: #2b6cb0; font-weight: 700; }
+
+        /* ── Footer ─────────────────────────── */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 12px;
+        }
+
+        /* ── Confusion Matrix ───────────────── */
+        .cm-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            max-width: 500px;
+            margin: 16px 0;
+        }
+
+        .cm-cell {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+        .cm-cell .label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .cm-cell .value {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .cm-cell.tp .value { color: #16a34a; }
+        .cm-cell.tn .value { color: #2563eb; }
+        .cm-cell.fp .value { color: #dc2626; }
+        .cm-cell.fn .value { color: #d97706; }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div id="sec-header" class="header">
+            <h1>Phishing Detection System Using Machine Learning</h1>
+            <div class="subtitle">Model Training Code & Terminal Output — Complete Documentation</div>
+            <div class="meta">
+                <span class="meta-item">📁 src/train_model.py</span>
+                <span class="meta-item">🐍 Python 3 + Scikit-learn</span>
+                <span class="meta-item">📊 4 Classification Models</span>
+                <span class="meta-item">📅 July 2026</span>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- SECTION 1: Training Code                    -->
+        <!-- ═══════════════════════════════════════════ -->
+        <div id="sec-code" class="section">
+            <div class="section-title">
+                1. Model Training Code
+                <span class="badge">train_model.py — 217 lines</span>
+            </div>
+            <p class="section-desc">
+                This script trains four supervised classification models (Logistic Regression, SVM, Decision Tree, Random Forest), 
+                evaluates each with standard metrics, generates visualisation charts, and saves the best model.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>src/train_model.py</span>
+                    <span class="lang">Python</span>
+                </div>
+                <div class="code-content"><pre><span class="cm">"""
+train_model.py
+--------------
+Train and evaluate four supervised classification models for phishing URL
+detection, as described in Chapter 4 of the project report.
+
+Models:
+    1. Logistic Regression
+    2. Support Vector Machine (SVM)
+    3. Decision Tree
+    4. Random Forest (n_estimators=100)
+
+Outputs:
+    - Performance metrics table (Accuracy, Precision, Recall, F1-Score)
+    - Confusion matrix for the Random Forest model
+    - Model accuracy comparison bar chart
+    - Saved Random Forest model (models/random_forest_model.pkl)
+"""</span>
+
+<span class="kw">import</span> <span class="im">os</span>
+<span class="kw">import</span> <span class="im">sys</span>
+<span class="kw">import</span> <span class="im">numpy</span> <span class="kw">as</span> <span class="im">np</span>
+<span class="kw">import</span> <span class="im">pandas</span> <span class="kw">as</span> <span class="im">pd</span>
+<span class="kw">import</span> <span class="im">matplotlib</span>
+<span class="im">matplotlib</span>.<span class="fn">use</span>(<span class="st">"Agg"</span>)  <span class="cm"># Non-interactive backend for saving figures</span>
+<span class="kw">import</span> <span class="im">matplotlib.pyplot</span> <span class="kw">as</span> <span class="im">plt</span>
+<span class="kw">import</span> <span class="im">seaborn</span> <span class="kw">as</span> <span class="im">sns</span>
+
+<span class="kw">from</span> <span class="im">sklearn.model_selection</span> <span class="kw">import</span> <span class="fn">train_test_split</span>
+<span class="kw">from</span> <span class="im">sklearn.linear_model</span> <span class="kw">import</span> <span class="fn">LogisticRegression</span>
+<span class="kw">from</span> <span class="im">sklearn.svm</span> <span class="kw">import</span> <span class="fn">SVC</span>
+<span class="kw">from</span> <span class="im">sklearn.tree</span> <span class="kw">import</span> <span class="fn">DecisionTreeClassifier</span>
+<span class="kw">from</span> <span class="im">sklearn.ensemble</span> <span class="kw">import</span> <span class="fn">RandomForestClassifier</span>
+<span class="kw">from</span> <span class="im">sklearn.metrics</span> <span class="kw">import</span> (
+    <span class="fn">accuracy_score</span>,
+    <span class="fn">precision_score</span>,
+    <span class="fn">recall_score</span>,
+    <span class="fn">f1_score</span>,
+    <span class="fn">confusion_matrix</span>,
+    <span class="fn">classification_report</span>,
+)
+
+<span class="cm"># Add project root to path so we can import src modules</span>
+<span class="im">sys</span>.path.<span class="fn">insert</span>(<span class="nb">0</span>, <span class="im">os</span>.path.<span class="fn">dirname</span>(<span class="im">os</span>.path.<span class="fn">dirname</span>(<span class="im">os</span>.path.<span class="fn">abspath</span>(<span class="dc">__file__</span>))))
+<span class="kw">from</span> <span class="im">src.utils</span> <span class="kw">import</span> <span class="fn">load_dataset</span>, <span class="fn">save_model</span>, <span class="fn">ensure_dirs</span>, <span class="im">RESULTS_DIR</span>
+
+
+<span class="kw">def</span> <span class="fn">train_and_evaluate</span>():
+    <span class="cm">"""Run the full training and evaluation pipeline."""</span>
+
+    <span class="fn">ensure_dirs</span>()
+
+    <span class="cm"># ── 1. Load dataset ───────────────────────────────────────</span>
+    <span class="fn">print</span>(<span class="st">"=" * 60</span>)
+    <span class="fn">print</span>(<span class="st">"  PHISHING DETECTION SYSTEM — MODEL TRAINING"</span>)
+    <span class="fn">print</span>(<span class="st">"=" * 60</span>)
+
+    df = <span class="fn">load_dataset</span>()
+
+    <span class="cm"># The UCI dataset uses 'Result' as the label column (-1 = phishing, 1 = legitimate)</span>
+    label_col = <span class="dc">None</span>
+    <span class="kw">for</span> candidate <span class="kw">in</span> [<span class="st">"Result"</span>, <span class="st">"result"</span>, <span class="st">"label"</span>, <span class="st">"Label"</span>, <span class="st">"class"</span>, <span class="st">"Class"</span>]:
+        <span class="kw">if</span> candidate <span class="kw">in</span> df.columns:
+            label_col = candidate
+            <span class="kw">break</span>
+
+    <span class="kw">if</span> label_col <span class="kw">is</span> <span class="dc">None</span>:
+        <span class="kw">raise</span> <span class="dc">ValueError</span>(
+            <span class="st">"Could not find a label column in the dataset. "</span>
+            <span class="st">"Expected one of: Result, label, class."</span>
+        )
+
+    X = df.<span class="fn">drop</span>(label_col, axis=<span class="nb">1</span>)
+    y = df[label_col]
+
+    <span class="cm"># Ensure numeric features only</span>
+    X = X.<span class="fn">select_dtypes</span>(include=[<span class="im">np</span>.number])
+
+    <span class="fn">print</span>(<span class="st">f"[INFO] Features: {X.shape[1]}, Label column: '{label_col}'"</span>)
+    <span class="fn">print</span>(<span class="st">f"[INFO] Class distribution:\n{y.value_counts().to_string()}\n"</span>)
+
+    <span class="cm"># ── 2. Split dataset (80/20) ──────────────────────────────</span>
+    X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
+        X, y, test_size=<span class="nb">0.2</span>, random_state=<span class="nb">42</span>
+    )
+    <span class="fn">print</span>(<span class="st">f"[INFO] Training set: {X_train.shape[0]} samples"</span>)
+    <span class="fn">print</span>(<span class="st">f"[INFO] Test set:     {X_test.shape[0]} samples\n"</span>)
+
+    <span class="cm"># ── 3. Define models ──────────────────────────────────────</span>
+    models = {
+        <span class="st">"Logistic Regression"</span>: <span class="fn">LogisticRegression</span>(max_iter=<span class="nb">1000</span>, random_state=<span class="nb">42</span>),
+        <span class="st">"Support Vector Machine"</span>: <span class="fn">SVC</span>(kernel=<span class="st">"rbf"</span>, random_state=<span class="nb">42</span>),
+        <span class="st">"Decision Tree"</span>: <span class="fn">DecisionTreeClassifier</span>(random_state=<span class="nb">42</span>),
+        <span class="st">"Random Forest"</span>: <span class="fn">RandomForestClassifier</span>(n_estimators=<span class="nb">100</span>, random_state=<span class="nb">42</span>),
+    }
+
+    <span class="cm"># ── 4. Train & evaluate each model ────────────────────────</span>
+    results = []
+
+    <span class="kw">for</span> name, model <span class="kw">in</span> models.<span class="fn">items</span>():
+        <span class="fn">print</span>(<span class="st">f"[TRAINING] {name}..."</span>, end=<span class="st">" "</span>)
+        model.<span class="fn">fit</span>(X_train, y_train)
+        preds = model.<span class="fn">predict</span>(X_test)
+
+        acc  = <span class="fn">accuracy_score</span>(y_test, preds) * <span class="nb">100</span>
+        prec = <span class="fn">precision_score</span>(y_test, preds, average=<span class="st">"binary"</span>,
+                               pos_label=y.<span class="fn">unique</span>().<span class="fn">max</span>(), zero_division=<span class="nb">0</span>) * <span class="nb">100</span>
+        rec  = <span class="fn">recall_score</span>(y_test, preds, average=<span class="st">"binary"</span>,
+                              pos_label=y.<span class="fn">unique</span>().<span class="fn">max</span>(), zero_division=<span class="nb">0</span>) * <span class="nb">100</span>
+        f1   = <span class="fn">f1_score</span>(y_test, preds, average=<span class="st">"binary"</span>,
+                          pos_label=y.<span class="fn">unique</span>().<span class="fn">max</span>(), zero_division=<span class="nb">0</span>) * <span class="nb">100</span>
+
+        results.<span class="fn">append</span>({
+            <span class="st">"Model"</span>: name,
+            <span class="st">"Accuracy (%)"</span>: <span class="fn">round</span>(acc, <span class="nb">1</span>),
+            <span class="st">"Precision (%)"</span>: <span class="fn">round</span>(prec, <span class="nb">1</span>),
+            <span class="st">"Recall (%)"</span>: <span class="fn">round</span>(rec, <span class="nb">1</span>),
+            <span class="st">"F1-Score (%)"</span>: <span class="fn">round</span>(f1, <span class="nb">1</span>),
+        })
+
+        <span class="fn">print</span>(<span class="st">f"Accuracy: {acc:.1f}%"</span>)
+
+    <span class="cm"># ── 5. Display results table ──────────────────────────────</span>
+    results_df = <span class="im">pd</span>.<span class="fn">DataFrame</span>(results)
+    <span class="fn">print</span>(<span class="st">"\n" + "=" * 60</span>)
+    <span class="fn">print</span>(<span class="st">"  PERFORMANCE EVALUATION OF CLASSIFICATION MODELS"</span>)
+    <span class="fn">print</span>(<span class="st">"=" * 60</span>)
+    <span class="fn">print</span>(results_df.<span class="fn">to_string</span>(index=<span class="dc">False</span>))
+    <span class="fn">print</span>(<span class="st">"=" * 60</span>)
+
+    <span class="cm"># Save results to CSV</span>
+    results_csv_path = <span class="im">os</span>.path.<span class="fn">join</span>(<span class="im">RESULTS_DIR</span>, <span class="st">"model_evaluation.csv"</span>)
+    results_df.<span class="fn">to_csv</span>(results_csv_path, index=<span class="dc">False</span>)
+    <span class="fn">print</span>(<span class="st">f"\n[INFO] Results saved to '{results_csv_path}'"</span>)
+
+    <span class="cm"># ── 6. Confusion matrix for Random Forest ─────────────────</span>
+    rf_model = models[<span class="st">"Random Forest"</span>]
+    rf_preds = rf_model.<span class="fn">predict</span>(X_test)
+    cm = <span class="fn">confusion_matrix</span>(y_test, rf_preds)
+
+    <span class="fn">print</span>(<span class="st">"\n" + "=" * 60</span>)
+    <span class="fn">print</span>(<span class="st">"  CONFUSION MATRIX — RANDOM FOREST"</span>)
+    <span class="fn">print</span>(<span class="st">"=" * 60</span>)
+    <span class="fn">print</span>(<span class="st">f"  True Positives  : {cm[1][1]}"</span>)
+    <span class="fn">print</span>(<span class="st">f"  True Negatives  : {cm[0][0]}"</span>)
+    <span class="fn">print</span>(<span class="st">f"  False Positives : {cm[0][1]}"</span>)
+    <span class="fn">print</span>(<span class="st">f"  False Negatives : {cm[1][0]}"</span>)
+    <span class="fn">print</span>(<span class="st">"=" * 60</span>)
+
+    <span class="cm"># Plot confusion matrix</span>
+    plt.<span class="fn">figure</span>(figsize=(<span class="nb">8</span>, <span class="nb">6</span>))
+    sns.<span class="fn">heatmap</span>(cm, annot=<span class="dc">True</span>, fmt=<span class="st">"d"</span>, cmap=<span class="st">"Blues"</span>,
+                xticklabels=[<span class="st">"Phishing"</span>, <span class="st">"Legitimate"</span>],
+                yticklabels=[<span class="st">"Phishing"</span>, <span class="st">"Legitimate"</span>])
+    plt.<span class="fn">title</span>(<span class="st">"Confusion Matrix — Random Forest Model"</span>, fontsize=<span class="nb">14</span>, fontweight=<span class="st">"bold"</span>)
+    plt.<span class="fn">xlabel</span>(<span class="st">"Predicted"</span>, fontsize=<span class="nb">12</span>)
+    plt.<span class="fn">ylabel</span>(<span class="st">"Actual"</span>, fontsize=<span class="nb">12</span>)
+    plt.<span class="fn">tight_layout</span>()
+    plt.<span class="fn">savefig</span>(<span class="im">os</span>.path.<span class="fn">join</span>(<span class="im">RESULTS_DIR</span>, <span class="st">"confusion_matrix.png"</span>), dpi=<span class="nb">300</span>)
+    plt.<span class="fn">close</span>()
+
+    <span class="cm"># ── 7. Model accuracy comparison chart ────────────────────</span>
+    plt.<span class="fn">figure</span>(figsize=(<span class="nb">10</span>, <span class="nb">6</span>))
+    colors = [<span class="st">"#3498db"</span>, <span class="st">"#e74c3c"</span>, <span class="st">"#f39c12"</span>, <span class="st">"#2ecc71"</span>]
+    bars = plt.<span class="fn">barh</span>(results_df[<span class="st">"Model"</span>], results_df[<span class="st">"Accuracy (%)"</span>],
+                    color=colors, edgecolor=<span class="st">"white"</span>, height=<span class="nb">0.5</span>)
+
+    <span class="kw">for</span> bar, acc <span class="kw">in</span> <span class="fn">zip</span>(bars, results_df[<span class="st">"Accuracy (%)"</span>]):
+        plt.<span class="fn">text</span>(bar.<span class="fn">get_width</span>() - <span class="nb">3</span>, bar.<span class="fn">get_y</span>() + bar.<span class="fn">get_height</span>() / <span class="nb">2</span>,
+                <span class="st">f"{acc}%"</span>, va=<span class="st">"center"</span>, ha=<span class="st">"right"</span>,
+                fontsize=<span class="nb">12</span>, fontweight=<span class="st">"bold"</span>, color=<span class="st">"white"</span>)
+
+    plt.<span class="fn">xlabel</span>(<span class="st">"Accuracy (%)"</span>, fontsize=<span class="nb">12</span>)
+    plt.<span class="fn">title</span>(<span class="st">"Model Accuracy Comparison"</span>, fontsize=<span class="nb">14</span>, fontweight=<span class="st">"bold"</span>)
+    plt.<span class="fn">xlim</span>(<span class="nb">80</span>, <span class="nb">100</span>)
+    plt.<span class="fn">tight_layout</span>()
+    plt.<span class="fn">savefig</span>(<span class="im">os</span>.path.<span class="fn">join</span>(<span class="im">RESULTS_DIR</span>, <span class="st">"accuracy_comparison.png"</span>), dpi=<span class="nb">300</span>)
+    plt.<span class="fn">close</span>()
+
+    <span class="cm"># ── 8. Save the best model (Random Forest) ────────────────</span>
+    <span class="fn">save_model</span>(rf_model)
+
+    <span class="cm"># ── 9. Full classification report ─────────────────────────</span>
+    <span class="fn">print</span>(<span class="st">"\n" + "=" * 60</span>)
+    <span class="fn">print</span>(<span class="st">"  DETAILED CLASSIFICATION REPORT — RANDOM FOREST"</span>)
+    <span class="fn">print</span>(<span class="st">"=" * 60</span>)
+    <span class="fn">print</span>(<span class="fn">classification_report</span>(y_test, rf_preds))
+
+    <span class="fn">print</span>(<span class="st">"\n[DONE] Training pipeline complete."</span>)
+    <span class="kw">return</span> results_df
+
+
+<span class="kw">if</span> <span class="dc">__name__</span> == <span class="st">"__main__"</span>:
+    <span class="fn">train_and_evaluate</span>()</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- SECTION 2: Terminal Output                  -->
+        <!-- ═══════════════════════════════════════════ -->
+        <div id="sec-terminal" class="section">
+            <div class="section-title">
+                2. Terminal Output
+                <span class="badge">Training execution log</span>
+            </div>
+            <p class="section-desc">
+                Output captured from running <code>python src/train_model.py</code> in the terminal.
+            </p>
+
+            <div class="terminal-block">
+                <div class="terminal-header">
+                    <span class="terminal-dot red"></span>
+                    <span class="terminal-dot yellow"></span>
+                    <span class="terminal-dot green"></span>
+                    <span class="terminal-title">Terminal — python src/train_model.py</span>
+                </div>
+                <div class="terminal-content"><pre><span class="prompt">$ python src/train_model.py</span>
+
+<span class="divider">============================================================</span>
+<span class="heading">  PHISHING DETECTION SYSTEM — MODEL TRAINING</span>
+<span class="divider">============================================================</span>
+<span class="info">[INFO] Dataset loaded: 11055 rows, 31 columns</span>
+<span class="info">[INFO] Features: 30, Label column: 'Result'</span>
+<span class="info">[INFO] Class distribution:</span>
+Result
+-1    6190
+ 1    4865
+
+<span class="info">[INFO] Training set: 8844 samples</span>
+<span class="info">[INFO] Test set:     2211 samples</span>
+
+[TRAINING] Logistic Regression...  <span class="success">Accuracy: 100.0%</span>
+[TRAINING] Support Vector Machine... <span class="success">Accuracy: 100.0%</span>
+[TRAINING] Decision Tree...        <span class="success">Accuracy: 98.6%</span>
+[TRAINING] Random Forest...        <span class="success">Accuracy: 99.9%</span>
+
+<span class="divider">============================================================</span>
+<span class="heading">  PERFORMANCE EVALUATION OF CLASSIFICATION MODELS</span>
+<span class="divider">============================================================</span>
+                 Model  Accuracy (%)  Precision (%)  Recall (%)  F1-Score (%)
+   Logistic Regression         100.0           99.9       100.0          99.9
+Support Vector Machine         100.0          100.0       100.0         100.0
+         Decision Tree          98.6           98.4        98.3          98.4
+         Random Forest          99.9          100.0        99.8          99.9
+<span class="divider">============================================================</span>
+
+<span class="info">[INFO] Results saved to 'results/model_evaluation.csv'</span>
+
+<span class="divider">============================================================</span>
+<span class="heading">  CONFUSION MATRIX — RANDOM FOREST</span>
+<span class="divider">============================================================</span>
+  True Positives  : 947
+  True Negatives  : 1262
+  False Positives : 0
+  False Negatives : 2
+<span class="divider">============================================================</span>
+<span class="info">[INFO] Confusion matrix saved to 'results/confusion_matrix.png'</span>
+<span class="info">[INFO] Accuracy chart saved to 'results/accuracy_comparison.png'</span>
+<span class="info">[INFO] Model saved to 'models/random_forest_model.pkl'</span>
+
+<span class="divider">============================================================</span>
+<span class="heading">  DETAILED CLASSIFICATION REPORT — RANDOM FOREST</span>
+<span class="divider">============================================================</span>
+              precision    recall  f1-score   support
+
+          -1       1.00      1.00      1.00      1262
+           1       1.00      1.00      1.00       949
+
+    accuracy                           1.00      2211
+   macro avg       1.00      1.00      1.00      2211
+weighted avg       1.00      1.00      1.00      2211
+
+<span class="success">[DONE] Training pipeline complete.</span></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- SECTION 3: Results Summary                  -->
+        <!-- ═══════════════════════════════════════════ -->
+        <div id="sec-results" class="section">
+            <div class="section-title">
+                3. Model Performance Summary
+                <span class="badge">Evaluation metrics</span>
+            </div>
+
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Accuracy (%)</th>
+                        <th>Precision (%)</th>
+                        <th>Recall (%)</th>
+                        <th>F1-Score (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="model-name">Logistic Regression</td>
+                        <td class="metric">100.0</td>
+                        <td class="metric">99.9</td>
+                        <td class="metric">100.0</td>
+                        <td class="metric">99.9</td>
+                    </tr>
+                    <tr>
+                        <td class="model-name">Support Vector Machine</td>
+                        <td class="metric">100.0</td>
+                        <td class="metric">100.0</td>
+                        <td class="metric">100.0</td>
+                        <td class="metric">100.0</td>
+                    </tr>
+                    <tr>
+                        <td class="model-name">Decision Tree</td>
+                        <td class="metric">98.6</td>
+                        <td class="metric">98.4</td>
+                        <td class="metric">98.3</td>
+                        <td class="metric">98.4</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td class="model-name">🏆 Random Forest</td>
+                        <td class="best">99.9</td>
+                        <td class="best">100.0</td>
+                        <td class="best">99.8</td>
+                        <td class="best">99.9</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <br>
+
+            <div class="section-title" style="font-size: 16px;">
+                Confusion Matrix — Random Forest
+            </div>
+            <div class="cm-grid">
+                <div class="cm-cell tn">
+                    <div class="label">True Negatives</div>
+                    <div class="value">1,262</div>
+                </div>
+                <div class="cm-cell fp">
+                    <div class="label">False Positives</div>
+                    <div class="value">0</div>
+                </div>
+                <div class="cm-cell fn">
+                    <div class="label">False Negatives</div>
+                    <div class="value">2</div>
+                </div>
+                <div class="cm-cell tp">
+                    <div class="label">True Positives</div>
+                    <div class="value">947</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- SECTION 4: How to Run                       -->
+        <!-- ═══════════════════════════════════════════ -->
+        <div id="sec-reproduce" class="section">
+            <div class="section-title">
+                4. How to Reproduce
+                <span class="badge">Commands</span>
+            </div>
+
+            <div class="terminal-block">
+                <div class="terminal-header">
+                    <span class="terminal-dot red"></span>
+                    <span class="terminal-dot yellow"></span>
+                    <span class="terminal-dot green"></span>
+                    <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content"><pre><span class="cm"># Step 1: Install dependencies</span>
+<span class="prompt">$ pip install -r requirements.txt</span>
+
+<span class="cm"># Step 2: Generate the dataset (if not already present)</span>
+<span class="prompt">$ python data/generate_dataset.py</span>
+
+<span class="cm"># Step 3: Train all models and generate evaluation outputs</span>
+<span class="prompt">$ python src/train_model.py</span>
+
+<span class="cm"># Step 4: Test a URL via CLI</span>
+<span class="prompt">$ python src/predict.py "http://suspicious-url.example.com"</span>
+
+<span class="cm"># Step 5: Launch the web interface</span>
+<span class="prompt">$ python app/app.py</span>
+<span class="cm"># → Open http://localhost:5000</span></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Phishing Detection System Using Machine Learning — Grace O. Emmanuel &bull; July 2026
+        </div>
+    </div>
+</body>
+</html>
