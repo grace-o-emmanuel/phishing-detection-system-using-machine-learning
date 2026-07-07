@@ -452,3 +452,21 @@ h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.04em; }
     .input-group { flex-direction: column; }
     .btn-primary { padding: 0.75rem; }
 }
+
+/* ── Button Loading Spinner ── */
+.btn-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+.btn-primary:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+}

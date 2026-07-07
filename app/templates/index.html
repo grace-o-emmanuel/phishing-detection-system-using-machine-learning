@@ -226,6 +226,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('analyse-form');
             const urlInput = document.getElementById('url-input');
+            const analyseBtn = document.getElementById('analyse-btn');
             const spinnerLoader = document.getElementById('spinner-loader');
             const resultsAnchor = document.getElementById('results-anchor');
             const diagnosticsAccordion = document.getElementById('diagnostics-accordion');
@@ -266,6 +267,12 @@
                 resultsAnchor.innerHTML = '';
                 spinnerLoader.style.display = 'flex';
 
+                // Disable button and show spinner inside it
+                if (analyseBtn) {
+                    analyseBtn.disabled = true;
+                    analyseBtn.innerHTML = `<span class="btn-spinner"></span>Analyzing...`;
+                }
+
                 try {
                     // Small delay to let the spinner render before the request locks the thread momentarily
                     await new Promise(r => setTimeout(r, 600));
@@ -284,16 +291,28 @@
                     // Added a fake network delay to make the spinner feel authentic for at least 1s
                     setTimeout(() => {
                         spinnerLoader.style.display = 'none';
+                        if (analyseBtn) {
+                            analyseBtn.disabled = false;
+                            analyseBtn.innerHTML = 'Analyze';
+                        }
+
                         if (data.success) {
                             renderResults(data);
                         } else {
                             renderError(data.error || 'Analysis error occurred.');
                         }
+                        // Smooth scroll to the results container
+                        resultsAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 500);
 
                 } catch (err) {
                     spinnerLoader.style.display = 'none';
+                    if (analyseBtn) {
+                        analyseBtn.disabled = false;
+                        analyseBtn.innerHTML = 'Analyze';
+                    }
                     renderError('Failed to communicate with the classification backend.');
+                    resultsAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }
 

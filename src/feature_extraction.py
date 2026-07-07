@@ -41,12 +41,70 @@ SUSPICIOUS_KEYWORDS = [
 ]
 
 
+def check_typosquatting(url):
+    """
+    Check if the domain part of the URL mimics a popular brand or financial institution.
+    """
+    try:
+        # Extract the domain
+        domain = url.split("//")[-1].split("/")[0].split("@")[-1].split(":")[0].lower()
+        if domain.startswith("www."):
+            domain = domain[4:]
+    except Exception:
+        return False
+
+    # Trusted domains (exact matches or subdomains of these are safe)
+    trusted_domains = {
+        "google.com", "gmail.com", "microsoft.com", "apple.com", "amazon.com",
+        "netflix.com", "facebook.com", "instagram.com", "twitter.com",
+        "linkedin.com", "yahoo.com", "wikipedia.org", "github.com",
+        "chase.com", "bankofamerica.com", "wellsfargo.com", "citi.com",
+        "citibank.com", "capitalone.com", "usbank.com", "hsbc.com",
+        "barclays.co.uk", "fidelity.com", "barclays.com"
+    }
+
+    for trusted in trusted_domains:
+        if domain == trusted or domain.endswith("." + trusted):
+            return False
+
+    # Keywords commonly targeted or used in typosquatting
+    target_keywords = [
+        "paypal", "ebay", "amazon", "netflix", "facebook", "instagram",
+        "twitter", "linkedin", "google", "microsoft", "apple", "chase",
+        "bankofamerica", "wellsfargo", "citibank", "capitalone", "hsbc",
+        "barclays", "fidelity", "blockchain", "coinbase", "binance"
+    ]
+
+    # Suspicious keywords in domain that mimic security/banking
+    suspicious_domain_keywords = [
+        "secure", "login", "verify", "update", "support", "account",
+        "signin", "banking", "online-banking", "securr", "paypaal", "log-in"
+    ]
+
+    # 1. Check if the domain contains a target brand as a substring (e.g. secure-paypal.com)
+    for brand in target_keywords:
+        if brand in domain:
+            return True
+
+    # 2. Check if the domain contains 'bank' or 'securr' (indicating typosquatted security/bank terms)
+    if "bank" in domain or "securr" in domain:
+        return True
+
+    # 3. Check for double letters typosquatting of suspicious keywords in domain
+    for kw in suspicious_domain_keywords:
+        if kw in domain:
+            return True
+
+    return False
+
+
+
 def _has_ip_address(url):
     """Check if the URL contains an IP address instead of a domain name."""
     ip_pattern = re.compile(
         r"(https?://)?(\d{1,3}\.){3}\d{1,3}"
     )
-    return 1 if ip_pattern.search(url) else -1
+    return -1 if ip_pattern.search(url) else 1
 
 
 def _url_length_category(url):
@@ -86,7 +144,9 @@ def _has_prefix_suffix(url):
     try:
         # Extract domain from URL
         domain = url.split("//")[-1].split("/")[0].split("@")[-1]
-        return -1 if "-" in domain else 1
+        if "-" in domain or check_typosquatting(url):
+            return -1
+        return 1
     except Exception:
         return -1
 
@@ -134,6 +194,8 @@ def _url_depth(url):
 
 def _count_special_chars(url):
     """Count suspicious special characters in the URL."""
+    if check_typosquatting(url):
+        return -1
     special = sum(1 for c in url if c in "~!#$%^&*()_+={}|[]\\:;'<>?,")
     if special == 0:
         return 1
@@ -145,6 +207,8 @@ def _count_special_chars(url):
 
 def _has_suspicious_keywords(url):
     """Check for phishing-related keywords in the URL."""
+    if check_typosquatting(url):
+        return -1
     url_lower = url.lower()
     count = sum(1 for kw in SUSPICIOUS_KEYWORDS if kw in url_lower)
     if count == 0:

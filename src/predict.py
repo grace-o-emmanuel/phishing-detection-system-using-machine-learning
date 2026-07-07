@@ -18,7 +18,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.utils import load_model
-from src.feature_extraction import extract_features_from_url, get_feature_names
+from src.feature_extraction import extract_features_from_url, get_feature_names, check_typosquatting
 
 # ── The 30 UCI feature columns the model was trained on ───────
 UCI_FEATURE_NAMES = [
@@ -95,8 +95,14 @@ def classify_url(url, model=None):
     # Predict
     prediction = model.predict(df)[0]
 
+    # Check for typosquatting / brand-mimicking heuristic override
+    is_typosquatted = check_typosquatting(url)
+
     # Determine label (UCI dataset: -1 = phishing, 1 = legitimate)
-    is_phishing = int(prediction) == -1
+    is_phishing = int(prediction) == -1 or is_typosquatted
+
+    if is_typosquatted:
+        prediction = -1
 
     result = {
         "url": url,
